@@ -29,7 +29,7 @@ export default function HeroSection() {
        {/* Placeholder Illustration */}
        <div className="relative mt-12 md:mt-16 h-64 md:h-96 w-full max-w-4xl mx-auto opacity-80 group">
           <Image
-           src="https://picsum.photos/1000/400" // Placeholder image URL
+           src="https://www.consultancy-me.com/illustrations/news/detail/2023-09-26-122248597-Middle_East_s_Gen_AI_economy_could_reach__24_billion_per_year_by_2030.jpg" // Placeholder image URL
            alt="AI tools illustration"
            layout="fill" // Use fill layout
            objectFit="cover" // Cover the container
