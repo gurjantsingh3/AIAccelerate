@@ -58,7 +58,7 @@ const summarizeResumeFlow = ai.defineFlow<
      let markdown: string;
      try {
        const conversionResult = await convertDocument({file: input.resumeFile});
-       markdown = conversionResult.markdown;
+       markdown = 'conversionResult';
        console.log('Document converted successfully for summarization.');
      } catch (error) {
        console.error('Error converting document in summarizeResumeFlow:', error);

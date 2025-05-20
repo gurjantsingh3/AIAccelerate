@@ -18,7 +18,11 @@ export const uploadResumeAndParse = async (file: File): Promise<any> => {
   };
 
 
-  export const uploadResumeAndMarkdown = async (file: File): Promise<any> => {
+  export interface ResumeUploadResponse {
+    markdown_content: string;
+  }
+  
+  export const uploadResumeAndMarkdown = async (file: File): Promise<ResumeUploadResponse> => {
     const formData = new FormData();
     formData.append("file", file);
   

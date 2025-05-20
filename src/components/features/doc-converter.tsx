@@ -14,7 +14,7 @@ import { uploadResumeAndMarkdown } from '@/lib/api';
 export default function DocConverter() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [result, setResult] = useState<ConvertDocumentResponse | null>(null);
+  const [result, setResult] = useState<{ markdown_content: string } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
