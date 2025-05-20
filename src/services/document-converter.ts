@@ -12,7 +12,7 @@ export interface ConvertDocumentResponse {
   /**
    * The converted document in Markdown format.
    */
-  markdown: string;
+  markdown_content: string;
 }
 
 /**
@@ -120,6 +120,6 @@ The conversion process would attempt to extract text content and apply basic Mar
 
 
   return {
-    markdown: sampleMarkdown.trim() // Trim any trailing whitespace
+    markdown_content: sampleMarkdown.trim() // Trim any trailing whitespace
   };
 }

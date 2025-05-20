@@ -9,6 +9,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Loader2, Upload, Download, ClipboardCopy, FileText } from 'lucide-react'; // Re-added FileText
 import { convertDocument, type ConvertDocumentResponse } from '@/services/document-converter';
 import { cn } from "@/lib/utils"; // Import cn
+import { uploadResumeAndMarkdown } from '@/lib/api';
 
 export default function DocConverter() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -32,31 +33,42 @@ export default function DocConverter() {
   const handleConvert = async () => {
     if (!selectedFile) {
       setError('Please select a file first.');
-      toast({ title: 'No File Selected', description: 'Please select a document to convert.', variant: 'destructive' });
+      toast({
+        title: 'No File Selected',
+        description: 'Please select a document to convert.',
+        variant: 'destructive'
+      });
       return;
     }
-
+  
     setIsLoading(true);
     setError(null);
     setResult(null);
-
+  
     try {
-      const conversionResult = await convertDocument({ file: selectedFile });
+      const conversionResult = await uploadResumeAndMarkdown(selectedFile); // 👈 Call your API
       setResult(conversionResult);
-      toast({ title: 'Conversion Successful', description: 'Document converted to Markdown.' });
+      toast({
+        title: 'Conversion Successful',
+        description: 'Document converted to Markdown.'
+      });
     } catch (err) {
       console.error('Error converting document:', err);
-       const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred during conversion.';
+      const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred during conversion.';
       setError(`Failed to convert document: ${errorMessage}`);
-      toast({ title: 'Conversion Failed', description: `Could not convert the document. ${errorMessage}`, variant: 'destructive' });
+      toast({
+        title: 'Conversion Failed',
+        description: `Could not convert the document. ${errorMessage}`,
+        variant: 'destructive'
+      });
     } finally {
       setIsLoading(false);
     }
   };
 
   const handleDownloadMarkdown = () => {
-    if (!result || !result.markdown) return; // Check if markdown exists
-    const blob = new Blob([result.markdown], { type: 'text/markdown;charset=utf-8' }); // Specify charset
+    if (!result || !result.markdown_content) return; // Check if markdown exists
+    const blob = new Blob([result.markdown_content], { type: 'text/markdown;charset=utf-8' }); // Specify charset
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
@@ -71,8 +83,8 @@ export default function DocConverter() {
   };
 
    const handleCopyToClipboard = () => {
-    if (!result || !result.markdown) return; // Check if markdown exists
-    navigator.clipboard.writeText(result.markdown)
+    if (!result || !result.markdown_content) return; // Check if markdown exists
+    navigator.clipboard.writeText(result.markdown_content)
       .then(() => {
         toast({ title: 'Copied to Clipboard', description: 'Markdown content copied.' });
       })
@@ -127,7 +139,7 @@ export default function DocConverter() {
            <h3 className="text-lg font-semibold text-primary">Converted Markdown:</h3>
            <Textarea
             readOnly
-            value={result.markdown}
+            value={result.markdown_content}
              className="flex-grow min-h-[250px] text-sm bg-muted/40 font-mono border border-border rounded-md shadow-inner" // Enhanced styling
             aria-label="Converted Markdown"
           />

@@ -16,4 +16,22 @@ export const uploadResumeAndParse = async (file: File): Promise<any> => {
   
     return await response.json();
   };
+
+
+  export const uploadResumeAndMarkdown = async (file: File): Promise<any> => {
+    const formData = new FormData();
+    formData.append("file", file);
+  
+    const response = await fetch("https://fastapi.dsbitteam.in/resume/upload", {
+      method: "POST",
+      body: formData,
+    });
+  
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(errorText || 'Failed to parse resume on server');
+    }
+  
+    return await response.json();
+  };
   
