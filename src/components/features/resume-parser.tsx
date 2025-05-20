@@ -10,6 +10,7 @@ import { Loader2, Upload, Download, ClipboardCopy, FileScan } from 'lucide-react
 import { resumeJsonGenerator, type ResumeJsonGeneratorOutput } from '@/ai/flows/resume-json-generator';
 import { convertDocument } from '@/services/document-converter';
 import { cn } from "@/lib/utils"; // Import cn utility function
+import { uploadResumeAndParse } from '@/lib/api';
 
 export default function ResumeParser() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -45,23 +46,16 @@ export default function ResumeParser() {
       toast({ title: 'No File Selected', description: 'Please select a resume file to parse.', variant: 'destructive' });
       return;
     }
-
+  
     setIsLoading(true);
     setError(null);
     setResult(null);
-
+  
     try {
-      const conversionResponse = await convertDocument({ file: selectedFile });
-      const resumeText = conversionResponse.markdown;
-
-      if (!resumeText || resumeText.trim().length === 0) {
-        throw new Error('Could not extract text from the resume file.');
-      }
-
-      const aiResult = await resumeJsonGenerator({ resumeText });
+      const aiResult = await uploadResumeAndParse(selectedFile); // <-- use new API
       setResult(aiResult);
       toast({ title: 'Resume Parsed Successfully', description: 'Extracted information is displayed below.' });
-
+  
     } catch (err) {
       console.error('Error parsing resume:', err);
       const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred.';
