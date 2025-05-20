@@ -16,16 +16,16 @@ import { uploadResumeAndScore } from '@/lib/api';
 // Placeholder for a match score calculation - replace with actual AI logic if available
 // For now, we use a simple keyword matching approach as a placeholder.
 export interface MatchResult {
-  skillsScore: number;
-  educationScore: number;
-  totalScore: number;
-  summary: {
-    totalScore: number;
-    experience: string;
-    requiredSkills: string;
-    educationAndCertification: string;
-    languageProficiency: string;
-    reasonForDeduction: string[];
+  SkillsScore: number;
+  EducationScore: number;
+  TotalScore: number;
+  Summary: {
+    TotalScore: number;
+    Experience: string;
+    RequiredSkills: string;
+    EducationAndCertification: string;
+    LanguageProficiency: string;
+    ReasonForDeduction: string[];
   };
 }
 
@@ -78,12 +78,13 @@ export default function JobMatcher() {
     try {
       toast({ title: 'Processing...', description: 'Analyzing resume and job description...' });
       const scoreResult = await uploadResumeAndScore(resumeFile, jobDescription);
+      console.log(scoreResult)
   
       setMatchResult({
-        skillsScore: scoreResult.skillsScore,
-        educationScore: scoreResult.educationScore,
-        totalScore: scoreResult.totalScore,
-        summary: scoreResult.summary,
+        SkillsScore: scoreResult.SkillsScore,
+        EducationScore: scoreResult.EducationScore,
+        TotalScore: scoreResult.TotalScore,
+        Summary: scoreResult.Summary,
       });
   
       toast({ title: 'Match Calculated', description: 'Resume and job description comparison complete.' });
@@ -167,21 +168,21 @@ export default function JobMatcher() {
   <div>
     <p className="text-sm font-medium text-foreground/80 mb-2">Match Score:</p>
     <div className="flex items-center gap-3">
-      <Progress value={matchResult.totalScore} className="w-full h-3 [&>div]:bg-gradient-to-r [&>div]:from-primary [&>div]:to-accent" />
-      <span className="font-semibold text-lg text-primary">{matchResult.totalScore}%</span>
+      <Progress value={matchResult.TotalScore} className="w-full h-3 [&>div]:bg-gradient-to-r [&>div]:from-primary [&>div]:to-accent" />
+      <span className="font-semibold text-lg text-primary">{matchResult.TotalScore}%</span>
     </div>
   </div>
 
   <div className="grid gap-3 bg-muted/10 p-4 rounded-lg">
-    <p><strong>Experience:</strong> {matchResult.summary.experience}</p>
-    <p><strong>Skills:</strong> {matchResult.summary.requiredSkills}</p>
-    <p><strong>Education:</strong> {matchResult.summary.educationAndCertification}</p>
-    <p><strong>Language:</strong> {matchResult.summary.languageProficiency}</p>
-    {matchResult.summary.reasonForDeduction.length > 0 && (
+    <p><strong>Experience:</strong> {matchResult.Summary.Experience}</p>
+    <p><strong>Skills:</strong> {matchResult.Summary.RequiredSkills}</p>
+    <p><strong>Education:</strong> {matchResult.Summary.EducationAndCertification}</p>
+    <p><strong>Language:</strong> {matchResult.Summary.LanguageProficiency}</p>
+    {matchResult.Summary.ReasonForDeduction.length > 0 && (
       <div>
         <strong>Reasons for Deduction:</strong>
         <ul className="list-disc ml-5 text-sm">
-          {matchResult.summary.reasonForDeduction.map((reason, index) => (
+          {matchResult.Summary.ReasonForDeduction.map((reason, index) => (
             <li key={index}>{reason}</li>
           ))}
         </ul>
