@@ -16,10 +16,17 @@ import { uploadResumeAndScore } from '@/lib/api';
 // Placeholder for a match score calculation - replace with actual AI logic if available
 // For now, we use a simple keyword matching approach as a placeholder.
 export interface MatchResult {
-  score: number; // TotalScore out of 100
-  summary: string; // AI summary
-  skillsScore: number; // SkillsScore out of 100
-  educationScore: number; // EducationScore out of 100
+  skillsScore: number;
+  educationScore: number;
+  totalScore: number;
+  summary: {
+    totalScore: number;
+    experience: string;
+    requiredSkills: string;
+    educationAndCertification: string;
+    languageProficiency: string;
+    reasonForDeduction: string[];
+  };
 }
 
 
@@ -73,10 +80,10 @@ export default function JobMatcher() {
       const scoreResult = await uploadResumeAndScore(resumeFile, jobDescription);
   
       setMatchResult({
-        score: scoreResult.TotalScore,
-        summary: scoreResult.Summary,
-        skillsScore: scoreResult.SkillsScore,
-        educationScore: scoreResult.EducationScore,
+        skillsScore: scoreResult.skillsScore,
+        educationScore: scoreResult.educationScore,
+        totalScore: scoreResult.totalScore,
+        summary: scoreResult.summary,
       });
   
       toast({ title: 'Match Calculated', description: 'Resume and job description comparison complete.' });
@@ -156,22 +163,32 @@ export default function JobMatcher() {
              </CardTitle>
              <CardDescription>AI-generated comparison summary.</CardDescription>
            </CardHeader>
-          <CardContent className="space-y-4 pt-2"> {/* Adjusted padding and spacing */}
-          <div>
-          <p className="text-sm font-medium text-foreground/80 mb-2">Overall Match Score:</p>
-          <div className="flex items-center gap-3 mb-3">
-            <Progress value={matchResult.score} className="w-full h-3" />
-            <span className="font-semibold text-lg text-primary">{matchResult.score}%</span>
-          </div>
+           <CardContent className="space-y-4 pt-2">
+  <div>
+    <p className="text-sm font-medium text-foreground/80 mb-2">Match Score:</p>
+    <div className="flex items-center gap-3">
+      <Progress value={matchResult.totalScore} className="w-full h-3 [&>div]:bg-gradient-to-r [&>div]:from-primary [&>div]:to-accent" />
+      <span className="font-semibold text-lg text-primary">{matchResult.totalScore}%</span>
+    </div>
+  </div>
 
-          <p className="text-sm font-medium text-foreground/80 mb-1">Skill Score: {matchResult.skillsScore}%</p>
-          <p className="text-sm font-medium text-foreground/80 mb-3">Education Score: {matchResult.educationScore}%</p>
-
-          <p className="text-sm font-medium text-foreground/80 mb-1">AI Summary:</p>
-          <p className="text-sm text-foreground/90 bg-muted/30 p-3 rounded-md border">{matchResult.summary}</p>
-</div>
-
-          </CardContent>
+  <div className="grid gap-3 bg-muted/10 p-4 rounded-lg">
+    <p><strong>Experience:</strong> {matchResult.summary.experience}</p>
+    <p><strong>Skills:</strong> {matchResult.summary.requiredSkills}</p>
+    <p><strong>Education:</strong> {matchResult.summary.educationAndCertification}</p>
+    <p><strong>Language:</strong> {matchResult.summary.languageProficiency}</p>
+    {matchResult.summary.reasonForDeduction.length > 0 && (
+      <div>
+        <strong>Reasons for Deduction:</strong>
+        <ul className="list-disc ml-5 text-sm">
+          {matchResult.summary.reasonForDeduction.map((reason, index) => (
+            <li key={index}>{reason}</li>
+          ))}
+        </ul>
+      </div>
+    )}
+  </div>
+</CardContent>
         </Card>
       )}
        {!matchResult && !isLoading && <div className="flex-grow min-h-[50px]"></div>} {/* Placeholder */}

@@ -40,11 +40,20 @@ export const uploadResumeAndParse = async (file: File): Promise<any> => {
   };
 
 
+  export interface ScoreSummary {
+    totalScore: number;
+    experience: string;
+    requiredSkills: string;
+    educationAndCertification: string;
+    languageProficiency: string;
+    reasonForDeduction: string[];
+  }
+  
   export interface ScoreResponse {
-    SkillsScore: number;
-    EducationScore: number;
-    TotalScore: number;
-    Summary: string;
+    skillsScore: number;
+    educationScore: number;
+    totalScore: number;
+    summary: ScoreSummary;
   }
   
   export const uploadResumeAndScore = async (
