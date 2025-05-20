@@ -7,64 +7,19 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, Upload, FileText, Briefcase, Merge } from 'lucide-react'; // Added Merge icon
-import { analyzeJobDescription, type AnalyzeJobDescriptionOutput } from '@/ai/flows/job-description-analyzer';
 import { summarizeResume, type SummarizeResumeOutput } from '@/ai/flows/resume-summarizer'; // Use the resume summarizer
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'; // Added CardDescription
 import { Progress } from '@/components/ui/progress';
 import { cn } from "@/lib/utils"; // Import cn
+import { uploadResumeAndScore } from '@/lib/api';
 
 // Placeholder for a match score calculation - replace with actual AI logic if available
 // For now, we use a simple keyword matching approach as a placeholder.
-interface MatchResult {
-  score: number; // Score out of 100
-  summary: string;
-}
-
-async function calculateMatchScore(resumeSummary: string, jobAnalysis: AnalyzeJobDescriptionOutput): Promise<MatchResult> {
-    // Basic keyword matching placeholder
-    const resumeWords = new Set(resumeSummary.toLowerCase().match(/\b(\w+)\b/g) || []);
-    const requiredSkillsLower = jobAnalysis.requiredSkills.map(skill => skill.toLowerCase());
-
-    let matchedSkills = 0;
-    requiredSkillsLower.forEach(skill => {
-        const skillWords = skill.split(' ').filter(Boolean); // Split and remove empty strings
-         if (skillWords.length === 0) return;
-
-        // Check if all words of the skill phrase are in the resume
-        if (skillWords.every(word => resumeWords.has(word))) {
-            matchedSkills++;
-        }
-        // Optional: Check if the entire skill phrase exists (less flexible)
-        // else if (resumeSummary.toLowerCase().includes(skill)) {
-        //    matchedSkills++;
-        // }
-        // Optional: Check for partial matches or synonyms (more complex)
-    });
-
-    const totalSkills = jobAnalysis.requiredSkills.length;
-    // Handle case where no skills are extracted from JD
-    const score = totalSkills > 0 ? Math.min(100, Math.round((matchedSkills / totalSkills) * 100)) : 50; // Score 50 if no skills found? Or 0?
-
-    let summary = `AI analysis complete. `;
-    if (totalSkills > 0) {
-        summary += `The resume summary mentions approximately ${matchedSkills} out of ${totalSkills} key skills identified in the job description. `;
-    } else {
-        summary += `Could not identify specific required skills in the job description to compare against. `;
-    }
-
-
-    if (score >= 80) {
-      summary += "This suggests a strong potential alignment.";
-    } else if (score >= 50) {
-      summary += "This suggests a moderate potential alignment.";
-    } else {
-      summary += "There may be gaps in alignment based on the extracted skills.";
-    }
-
-    // You could enhance this summary using another AI call if needed,
-    // passing both resumeSummary and jobAnalysis.summary.
-
-    return { score, summary };
+export interface MatchResult {
+  score: number; // TotalScore out of 100
+  summary: string; // AI summary
+  skillsScore: number; // SkillsScore out of 100
+  educationScore: number; // EducationScore out of 100
 }
 
 
@@ -108,34 +63,27 @@ export default function JobMatcher() {
       toast({ title: 'Missing Job Description', description: 'Please enter the job description.', variant: 'destructive' });
       return;
     }
-
+  
     setIsLoading(true);
     setError(null);
     setMatchResult(null);
-
+  
     try {
-      // 1. Summarize the Resume using the AI flow
-      toast({ title: 'Processing...', description: 'Summarizing resume...' });
-      const resumeSummaryResult: SummarizeResumeOutput = await summarizeResume({ resumeFile });
-       if (!resumeSummaryResult.summary || resumeSummaryResult.summary.startsWith("Could not extract text")) {
-          throw new Error(resumeSummaryResult.summary || 'Failed to extract text from resume.');
-       }
-
-
-      // 2. Analyze the Job Description using the AI flow
-      toast({ title: 'Processing...', description: 'Analyzing job description...' });
-      const jobAnalysisResult: AnalyzeJobDescriptionOutput = await analyzeJobDescription({ jobDescription });
-
-      // 3. Calculate Match Score
-       toast({ title: 'Processing...', description: 'Calculating match score...' });
-      const scoreResult = await calculateMatchScore(resumeSummaryResult.summary, jobAnalysisResult);
-
-      setMatchResult(scoreResult);
+      toast({ title: 'Processing...', description: 'Analyzing resume and job description...' });
+      const scoreResult = await uploadResumeAndScore(resumeFile, jobDescription);
+  
+      setMatchResult({
+        score: scoreResult.TotalScore,
+        summary: scoreResult.Summary,
+        skillsScore: scoreResult.SkillsScore,
+        educationScore: scoreResult.EducationScore,
+      });
+  
       toast({ title: 'Match Calculated', description: 'Resume and job description comparison complete.' });
-
+  
     } catch (err) {
       console.error('Error matching resume and job description:', err);
-       const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred.';
+      const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred.';
       setError(`Failed to calculate match: ${errorMessage}`);
       toast({ title: 'Matching Failed', description: `Could not perform the match. ${errorMessage}`, variant: 'destructive' });
     } finally {
@@ -209,20 +157,19 @@ export default function JobMatcher() {
              <CardDescription>AI-generated comparison summary.</CardDescription>
            </CardHeader>
           <CardContent className="space-y-4 pt-2"> {/* Adjusted padding and spacing */}
-             <div>
-                <p className="text-sm font-medium text-foreground/80 mb-2">Match Score:</p>
-                <div className="flex items-center gap-3">
-                  {/* Apply gradient to progress bar */}
-                  <Progress value={matchResult.score} className="w-full h-3 [&>div]:bg-gradient-to-r [&>div]:from-primary [&>div]:to-accent" aria-label={`Match score: ${matchResult.score}%`} />
-                  <span className="font-semibold text-lg text-primary">{matchResult.score}%</span>
-                </div>
-            </div>
-             <div>
-                <p className="text-sm font-medium text-foreground/80 mb-1">AI Summary:</p>
-                <p className="text-sm text-foreground/90 bg-muted/30 p-3 rounded-md border"> {/* Added background and padding */}
-                  {matchResult.summary}
-                </p>
-             </div>
+          <div>
+          <p className="text-sm font-medium text-foreground/80 mb-2">Overall Match Score:</p>
+          <div className="flex items-center gap-3 mb-3">
+            <Progress value={matchResult.score} className="w-full h-3" />
+            <span className="font-semibold text-lg text-primary">{matchResult.score}%</span>
+          </div>
+
+          <p className="text-sm font-medium text-foreground/80 mb-1">Skill Score: {matchResult.skillsScore}%</p>
+          <p className="text-sm font-medium text-foreground/80 mb-3">Education Score: {matchResult.educationScore}%</p>
+
+          <p className="text-sm font-medium text-foreground/80 mb-1">AI Summary:</p>
+          <p className="text-sm text-foreground/90 bg-muted/30 p-3 rounded-md border">{matchResult.summary}</p>
+</div>
 
           </CardContent>
         </Card>

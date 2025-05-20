@@ -38,4 +38,33 @@ export const uploadResumeAndParse = async (file: File): Promise<any> => {
   
     return await response.json();
   };
+
+
+  export interface ScoreResponse {
+    SkillsScore: number;
+    EducationScore: number;
+    TotalScore: number;
+    Summary: string;
+  }
+  
+  export const uploadResumeAndScore = async (
+    resumeFile: File,
+    jobDescription: string
+  ): Promise<ScoreResponse> => {
+    const formData = new FormData();
+    formData.append('file', resumeFile);
+    formData.append('job_description', jobDescription);
+  
+    const response = await fetch('https://fastapi.dsbitteam.in/resume/upload-and-score', {
+      method: 'POST',
+      body: formData,
+    });
+  
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(errorText || 'Failed to calculate score on server');
+    }
+  
+    return await response.json();
+  };
   
